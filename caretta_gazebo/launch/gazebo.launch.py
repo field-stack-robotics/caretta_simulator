@@ -45,7 +45,10 @@ def generate_launch_description():
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        parameters=[{'robot_description': robot_description, 'use_sim_time': True}],
+        # publish_frequency defaults to 20 Hz: wheel TFs lag the 100 Hz odom TF in RViz
+        parameters=[{'robot_description': robot_description,
+                     'use_sim_time': True,
+                     'publish_frequency': 100.0}],
         output='screen',
     )
 
