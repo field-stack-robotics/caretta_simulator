@@ -1,6 +1,7 @@
 """Caretta in Gazebo (Ignition Fortress) with ros2_control diff_drive_controller, LiDAR and camera.
 
 ros2 launch caretta_gazebo gazebo.launch.py              (add rviz:=true to see robot + /scan)
+world: world:=caretta_house (default, house for SLAM) or world:=caretta_test (small test room)
 headless: ros2 launch caretta_gazebo gazebo.launch.py extra_gz_args:="-s --headless-rendering"
 drive: ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=cmd_vel_teleop
 Controllers and twist_mux come from caretta_control, the EKF from caretta_localization.
@@ -31,7 +32,9 @@ def generate_launch_description():
     gazebo_share = get_package_share_directory('caretta_gazebo')
 
     world = LaunchConfiguration('world')
-    gz_args = [LaunchConfiguration('extra_gz_args'), ' -r ', world]
+    # world:=<name> -> caretta_gazebo/worlds/<name>.sdf
+    gz_args = [LaunchConfiguration('extra_gz_args'), ' -r ',
+               os.path.join(gazebo_share, 'worlds', ''), world, '.sdf']
 
     # Gazebo resolves package://caretta_description/... meshes from this path
     resource_path = AppendEnvironmentVariable(
@@ -110,8 +113,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('world', default_value=os.path.join(gazebo_share, 'worlds', 'caretta_test.sdf'),
-                              description='SDF world (must load the Sensors system for the LiDAR)'),
+        DeclareLaunchArgument('world', default_value='caretta_house',
+                              description='world name in caretta_gazebo/worlds: caretta_house, caretta_test'),
         DeclareLaunchArgument('extra_gz_args', default_value='',
                               description='extra Gazebo args, e.g. "-s --headless-rendering"'),
         DeclareLaunchArgument('rviz', default_value='false', description='start RViz with robot + scan'),

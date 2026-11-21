@@ -100,6 +100,8 @@ Start Gazebo with the robot, and RViz:
 ros2 launch caretta_gazebo gazebo.launch.py rviz:=true
 ```
 
+The default world is `caretta_house` (corridor, three rooms, furniture; for SLAM). For the small test room add `world:=caretta_test`.
+
 Drive the robot with the keyboard (in a second terminal):
 
 ```bash
