@@ -121,7 +121,8 @@ Sensors:
 - `/scan`: LiDAR
 - `/camera/image_raw`: camera
 - `/imu`: IMU (BNO055, 100 Hz)
-- `/diff_drive_controller/odom`: odometry
+- `/diff_drive_controller/odom`: wheel odometry
+- `/odometry/filtered`: EKF output, wheel odometry + IMU (also the TF `odom` -> `caretta_base_footprint`)
 
 Velocity commands (`twist_mux` picks one; the higher priority wins):
 

@@ -3,7 +3,7 @@
 ros2 launch caretta_gazebo gazebo.launch.py              (add rviz:=true to see robot + /scan)
 headless: ros2 launch caretta_gazebo gazebo.launch.py extra_gz_args:="-s --headless-rendering"
 drive: ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=cmd_vel_teleop
-Controllers and twist_mux come from caretta_control/launch/control.launch.py.
+Controllers and twist_mux come from caretta_control, the EKF from caretta_localization.
 """
 import os
 
@@ -26,6 +26,8 @@ def generate_launch_description():
                                     'config', 'caretta_controllers.yaml')
     control_launch = os.path.join(get_package_share_directory('caretta_control'),
                                   'launch', 'control.launch.py')
+    localization_launch = os.path.join(get_package_share_directory('caretta_localization'),
+                                       'launch', 'localization.launch.py')
     gazebo_share = get_package_share_directory('caretta_gazebo')
 
     world = LaunchConfiguration('world')
@@ -100,6 +102,13 @@ def generate_launch_description():
         launch_arguments={'use_sim_time': 'true'}.items(),
     )
 
+    # EKF: wheel odometry + IMU -> odom -> base_footprint TF.
+    # No need to wait for the robot: it idles until the first sensor message.
+    localization = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(localization_launch),
+        launch_arguments={'use_sim_time': 'true'}.items(),
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument('world', default_value=os.path.join(gazebo_share, 'worlds', 'caretta_test.sdf'),
                               description='SDF world (must load the Sensors system for the LiDAR)'),
@@ -112,6 +121,7 @@ def generate_launch_description():
         bridge,
         image_bridge,
         rviz,
+        localization,
         spawn_robot,
         # controllers can only start after the robot (and its controller_manager) exists
         RegisterEventHandler(OnProcessExit(

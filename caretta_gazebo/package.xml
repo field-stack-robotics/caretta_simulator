@@ -17,6 +17,7 @@
   <exec_depend>ros_gz_image</exec_depend>
   <exec_depend>gz_ros2_control</exec_depend>
   <exec_depend>caretta_control</exec_depend>
+  <exec_depend>caretta_localization</exec_depend>
   <exec_depend>rviz2</exec_depend>
 
   <export>
