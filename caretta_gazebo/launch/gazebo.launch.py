@@ -2,6 +2,7 @@
 
 ros2 launch caretta_gazebo gazebo.launch.py              (add rviz:=true to see robot + /scan)
 world: world:=caretta_house (default, house for SLAM), caretta_outdoor (field for GPS) or caretta_test (small room)
+GPS:   world:=caretta_outdoor gps:=true   (dual-antenna RTK: /gps/front/fix, /gps/rear/fix)
 headless: ros2 launch caretta_gazebo gazebo.launch.py extra_gz_args:="-s --headless-rendering"
 drive: ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=cmd_vel_teleop
 Controllers and twist_mux come from caretta_control, the EKF from caretta_localization.
@@ -49,7 +50,8 @@ def generate_launch_description():
 
     robot_description = ParameterValue(
         Command(['xacro ', xacro_path, ' use_gazebo:=true',
-                 ' controllers_file:=', controllers_file]), value_type=str
+                 ' controllers_file:=', controllers_file,
+                 ' gps:=', LaunchConfiguration('gps')]), value_type=str
     )
 
     robot_state_publisher = Node(
@@ -70,6 +72,9 @@ def generate_launch_description():
             '/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock',
             '/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan',
             '/imu@sensor_msgs/msg/Imu[ignition.msgs.IMU',
+            # dual-antenna GPS (only with gps:=true in a world with NavSat, e.g. caretta_outdoor)
+            '/gps/front/fix@sensor_msgs/msg/NavSatFix[ignition.msgs.NavSat',
+            '/gps/rear/fix@sensor_msgs/msg/NavSatFix[ignition.msgs.NavSat',
             '/camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
         ],
         output='screen',
@@ -118,6 +123,8 @@ def generate_launch_description():
         DeclareLaunchArgument('extra_gz_args', default_value='',
                               description='extra Gazebo args, e.g. "-s --headless-rendering"'),
         DeclareLaunchArgument('rviz', default_value='false', description='start RViz with robot + scan'),
+        DeclareLaunchArgument('gps', default_value='false',
+                              description='dual-antenna RTK GPS on the robot (outdoor: world:=caretta_outdoor gps:=true)'),
         resource_path,
         gazebo,
         robot_state_publisher,
