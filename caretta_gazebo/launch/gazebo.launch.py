@@ -1,7 +1,7 @@
 """Caretta in Gazebo (Ignition Fortress) with ros2_control diff_drive_controller, LiDAR and camera.
 
 ros2 launch caretta_gazebo gazebo.launch.py              (add rviz:=true to see robot + /scan)
-world: world:=caretta_house (default, house for SLAM) or world:=caretta_test (small test room)
+world: world:=caretta_house (default, house for SLAM), caretta_outdoor (field for GPS) or caretta_test (small room)
 headless: ros2 launch caretta_gazebo gazebo.launch.py extra_gz_args:="-s --headless-rendering"
 drive: ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=cmd_vel_teleop
 Controllers and twist_mux come from caretta_control, the EKF from caretta_localization.
@@ -114,7 +114,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('world', default_value='caretta_house',
-                              description='world name in caretta_gazebo/worlds: caretta_house, caretta_test'),
+                              description='world name in caretta_gazebo/worlds: caretta_house, caretta_outdoor, caretta_test'),
         DeclareLaunchArgument('extra_gz_args', default_value='',
                               description='extra Gazebo args, e.g. "-s --headless-rendering"'),
         DeclareLaunchArgument('rviz', default_value='false', description='start RViz with robot + scan'),

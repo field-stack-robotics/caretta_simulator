@@ -1,0 +1,360 @@
+<?xml version="1.0" ?>
+<!-- Caretta outdoor world (Ignition Gazebo Fortress): a flat grass field with a gravel path loop,
+     trees, a shed, rocks and a fence, for GPS / RTK tests. spherical_coordinates gives the world a
+     place on Earth, so a navsat (GPS) sensor reports latitude/longitude. Robot spawns at (0, 0). -->
+<sdf version="1.8">
+  <world name="caretta_outdoor">
+
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="ignition-gazebo-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="ignition-gazebo-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="ignition-gazebo-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="ignition-gazebo-contact-system" name="gz::sim::systems::Contact"/>
+    <!-- needed for every sensor (gpu_lidar, camera ...) -->
+    <plugin filename="ignition-gazebo-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <!-- needed for the IMU sensor (BNO055) -->
+    <plugin filename="ignition-gazebo-imu-system" name="gz::sim::systems::Imu"/>
+    <!-- needed for a navsat (GPS) sensor on the robot (added later) -->
+    <plugin filename="ignition-gazebo-navsat-system" name="gz::sim::systems::NavSat"/>
+    <!-- needed for a magnetometer (compass) sensor, if we add one for the heading outdoors -->
+    <plugin filename="ignition-gazebo-magnetometer-system" name="gz::sim::systems::Magnetometer"/>
+
+    <!-- where the world origin (0, 0, 0) is on Earth. x = east, y = north (ENU).
+         Any place works for simulation; change it to your test field later. -->
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>52.0</latitude_deg>
+      <longitude_deg>5.0</longitude_deg>
+      <elevation>0.0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+
+    <scene>
+      <sky></sky>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.6 0.75 0.9 1</background>
+    </scene>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 30 0 0 0</pose>
+      <diffuse>0.9 0.9 0.85 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.4 0.3 -0.85</direction>
+    </light>
+
+    <!-- 200 x 200 m grass field -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>200 200</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>200 200</size></plane></geometry>
+          <material><ambient>0.33 0.55 0.25 1</ambient><diffuse>0.33 0.55 0.25 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- gravel path, a 30 x 20 m loop (visual only, 2 mm high): the robot spawns at (0, 0),
+         the south-west corner, facing +x (east). Drive or send GPS waypoints around it. -->
+    <model name="gravel_path">
+      <static>true</static>
+      <link name="link">
+        <visual name="path_south_visual"><pose>15 0 0.001 0 0 0</pose><geometry><box><size>31.5 1.5 0.002</size></box></geometry><material><ambient>0.72 0.66 0.55 1</ambient><diffuse>0.72 0.66 0.55 1</diffuse></material></visual>
+        <visual name="path_north_visual"><pose>15 20 0.001 0 0 0</pose><geometry><box><size>31.5 1.5 0.002</size></box></geometry><material><ambient>0.72 0.66 0.55 1</ambient><diffuse>0.72 0.66 0.55 1</diffuse></material></visual>
+        <visual name="path_west_visual"><pose>0 10 0.001 0 0 0</pose><geometry><box><size>1.5 20 0.002</size></box></geometry><material><ambient>0.72 0.66 0.55 1</ambient><diffuse>0.72 0.66 0.55 1</diffuse></material></visual>
+        <visual name="path_east_visual"><pose>30 10 0.001 0 0 0</pose><geometry><box><size>1.5 20 0.002</size></box></geometry><material><ambient>0.72 0.66 0.55 1</ambient><diffuse>0.72 0.66 0.55 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- coloured poles next to the 4 path corners (WP1..WP4, counter-clockwise): landmarks for GPS waypoint tests -->
+    <model name="wp1_pole">
+      <static>true</static>
+      <pose>-1.5 -1.5 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.05</radius><length>1.5</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.05</radius><length>1.5</length></cylinder></geometry><material><ambient>0.85 0.15 0.15 1</ambient><diffuse>0.85 0.15 0.15 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="wp2_pole">
+      <static>true</static>
+      <pose>31.5 -1.5 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.05</radius><length>1.5</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.05</radius><length>1.5</length></cylinder></geometry><material><ambient>0.95 0.60 0.10 1</ambient><diffuse>0.95 0.60 0.10 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="wp3_pole">
+      <static>true</static>
+      <pose>31.5 21.5 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.05</radius><length>1.5</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.05</radius><length>1.5</length></cylinder></geometry><material><ambient>0.15 0.45 0.85 1</ambient><diffuse>0.15 0.45 0.85 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="wp4_pole">
+      <static>true</static>
+      <pose>-1.5 21.5 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.05</radius><length>1.5</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.05</radius><length>1.5</length></cylinder></geometry><material><ambient>0.60 0.20 0.70 1</ambient><diffuse>0.60 0.20 0.70 1</diffuse></material></visual>
+      </link>
+    </model>
+    <!-- trees: the LiDAR sees the trunks (scan plane ~0.15 m), the crowns are only for looks -->
+    <model name="tree_1">
+      <static>true</static>
+      <pose>6 4 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>2</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>2</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 2.6 0 0 0</pose><geometry><sphere><radius>1</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_2">
+      <static>true</static>
+      <pose>11 -4 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.2 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>2.4</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.2 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>2.4</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3 0 0 0</pose><geometry><sphere><radius>1.2</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_3">
+      <static>true</static>
+      <pose>17 5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.4 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>2.8</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.4 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>2.8</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3.4 0 0 0</pose><geometry><sphere><radius>1.4</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_4">
+      <static>true</static>
+      <pose>23 -3.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.6 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>3.2</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.6 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>3.2</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3.8 0 0 0</pose><geometry><sphere><radius>1</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_5">
+      <static>true</static>
+      <pose>5 12 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>2</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>2</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 2.6 0 0 0</pose><geometry><sphere><radius>1.2</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_6">
+      <static>true</static>
+      <pose>12 9 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.2 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>2.4</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.2 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>2.4</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3 0 0 0</pose><geometry><sphere><radius>1.4</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_7">
+      <static>true</static>
+      <pose>19 14 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.4 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>2.8</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.4 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>2.8</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3.4 0 0 0</pose><geometry><sphere><radius>1</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_8">
+      <static>true</static>
+      <pose>26 10 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.6 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>3.2</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.6 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>3.2</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3.8 0 0 0</pose><geometry><sphere><radius>1.2</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_9">
+      <static>true</static>
+      <pose>34 6 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>2</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>2</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 2.6 0 0 0</pose><geometry><sphere><radius>1.4</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_10">
+      <static>true</static>
+      <pose>34 15 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.2 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>2.4</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.2 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>2.4</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3 0 0 0</pose><geometry><sphere><radius>1</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_11">
+      <static>true</static>
+      <pose>-4 8 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.4 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>2.8</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.4 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>2.8</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3.4 0 0 0</pose><geometry><sphere><radius>1.2</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_12">
+      <static>true</static>
+      <pose>-5 16 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.6 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>3.2</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.6 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>3.2</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3.8 0 0 0</pose><geometry><sphere><radius>1.4</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_13">
+      <static>true</static>
+      <pose>8 24 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>2</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>2</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 2.6 0 0 0</pose><geometry><sphere><radius>1</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_14">
+      <static>true</static>
+      <pose>16 25 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.2 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>2.4</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.2 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>2.4</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3 0 0 0</pose><geometry><sphere><radius>1.2</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_15">
+      <static>true</static>
+      <pose>27 24 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.4 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>2.8</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.4 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>2.8</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3.4 0 0 0</pose><geometry><sphere><radius>1.4</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="tree_16">
+      <static>true</static>
+      <pose>14 16 0 0 0 0</pose>
+      <link name="link">
+        <collision name="trunk_collision"><pose>0 0 1.6 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>3.2</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 1.6 0 0 0</pose><geometry><cylinder><radius>0.12</radius><length>3.2</length></cylinder></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="crown_visual"><pose>0 0 3.8 0 0 0</pose><geometry><sphere><radius>1</radius></sphere></geometry><material><ambient>0.20 0.45 0.18 1</ambient><diffuse>0.20 0.45 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+    <!-- small shed inside the loop -->
+    <model name="shed">
+      <static>true</static>
+      <pose>15 10 1.25 0 0 0.2</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>5 3.5 2.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>5 3.5 2.5</size></box></geometry><material><ambient>0.70 0.62 0.50 1</ambient><diffuse>0.70 0.62 0.50 1</diffuse></material></visual>
+        <visual name="roof_visual"><pose>0 0 1.35 0 0 0</pose><geometry><box><size>5.4 3.9 0.2</size></box></geometry><material><ambient>0.45 0.20 0.15 1</ambient><diffuse>0.45 0.20 0.15 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="bench">
+      <static>true</static>
+      <pose>8 -2.2 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.6 0.5 0.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1.6 0.5 0.5</size></box></geometry><material><ambient>0.45 0.30 0.20 1</ambient><diffuse>0.45 0.30 0.20 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="rock_1">
+      <static>true</static>
+      <pose>22 2.5 0.2 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><sphere><radius>0.4</radius></sphere></geometry></collision>
+        <visual name="visual"><geometry><sphere><radius>0.4</radius></sphere></geometry><material><ambient>0.50 0.50 0.48 1</ambient><diffuse>0.50 0.50 0.48 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="rock_2">
+      <static>true</static>
+      <pose>31.5 8 0.3 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><sphere><radius>0.6</radius></sphere></geometry></collision>
+        <visual name="visual"><geometry><sphere><radius>0.6</radius></sphere></geometry><material><ambient>0.50 0.50 0.48 1</ambient><diffuse>0.50 0.50 0.48 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="rock_3">
+      <static>true</static>
+      <pose>-2.5 4 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><sphere><radius>0.5</radius></sphere></geometry></collision>
+        <visual name="visual"><geometry><sphere><radius>0.5</radius></sphere></geometry><material><ambient>0.50 0.50 0.48 1</ambient><diffuse>0.50 0.50 0.48 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="rock_4">
+      <static>true</static>
+      <pose>10 21.8 0.175 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><sphere><radius>0.35</radius></sphere></geometry></collision>
+        <visual name="visual"><geometry><sphere><radius>0.35</radius></sphere></geometry><material><ambient>0.50 0.50 0.48 1</ambient><diffuse>0.50 0.50 0.48 1</diffuse></material></visual>
+      </link>
+    </model>
+    <!-- fence posts along the south edge (y = -6): a long straight row, like a field border -->
+    <model name="fence">
+      <static>true</static>
+      <link name="link">
+        <collision name="post_0_collision"><pose>-6 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_0_visual"><pose>-6 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_1_collision"><pose>-4 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_1_visual"><pose>-4 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_2_collision"><pose>-2 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_2_visual"><pose>-2 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_3_collision"><pose>0 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_3_visual"><pose>0 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_4_collision"><pose>2 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_4_visual"><pose>2 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_5_collision"><pose>4 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_5_visual"><pose>4 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_6_collision"><pose>6 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_6_visual"><pose>6 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_7_collision"><pose>8 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_7_visual"><pose>8 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_8_collision"><pose>10 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_8_visual"><pose>10 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_9_collision"><pose>12 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_9_visual"><pose>12 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_10_collision"><pose>14 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_10_visual"><pose>14 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_11_collision"><pose>16 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_11_visual"><pose>16 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_12_collision"><pose>18 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_12_visual"><pose>18 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_13_collision"><pose>20 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_13_visual"><pose>20 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_14_collision"><pose>22 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_14_visual"><pose>22 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_15_collision"><pose>24 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_15_visual"><pose>24 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_16_collision"><pose>26 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_16_visual"><pose>26 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_17_collision"><pose>28 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_17_visual"><pose>28 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_18_collision"><pose>30 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_18_visual"><pose>30 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_19_collision"><pose>32 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_19_visual"><pose>32 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_20_collision"><pose>34 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_20_visual"><pose>34 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <collision name="post_21_collision"><pose>36 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
+        <visual name="post_21_visual"><pose>36 -6 0.5 0 0 0</pose><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+        <visual name="rail_visual"><pose>15 -6 0.8 0 0 0</pose><geometry><box><size>42 0.05 0.08</size></box></geometry><material><ambient>0.40 0.28 0.18 1</ambient><diffuse>0.40 0.28 0.18 1</diffuse></material></visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>
