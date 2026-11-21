@@ -111,6 +111,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard \
 
 - `/scan`: LiDAR
 - `/camera/image_raw`: camera
+- `/imu`: IMU (BNO055, 100 Hz)
 - `/diff_drive_controller/odom`: odometry
 
 ## License
