@@ -2,8 +2,8 @@
 
 ros2 launch caretta_gazebo gazebo.launch.py              (add rviz:=true to see robot + /scan)
 headless: ros2 launch caretta_gazebo gazebo.launch.py extra_gz_args:="-s --headless-rendering"
-drive: ros2 run teleop_twist_keyboard teleop_twist_keyboard \
-         --ros-args -r cmd_vel:=/diff_drive_controller/cmd_vel_unstamped
+drive: ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=cmd_vel_teleop
+Controllers and twist_mux come from caretta_control/launch/control.launch.py.
 """
 import os
 
@@ -22,6 +22,10 @@ from launch_ros.parameter_descriptions import ParameterValue
 def generate_launch_description():
     description_share = get_package_share_directory('caretta_description')
     xacro_path = os.path.join(description_share, 'urdf', 'caretta.urdf.xacro')
+    controllers_file = os.path.join(get_package_share_directory('caretta_control'),
+                                    'config', 'caretta_controllers.yaml')
+    control_launch = os.path.join(get_package_share_directory('caretta_control'),
+                                  'launch', 'control.launch.py')
     gazebo_share = get_package_share_directory('caretta_gazebo')
 
     world = LaunchConfiguration('world')
@@ -39,7 +43,8 @@ def generate_launch_description():
     )
 
     robot_description = ParameterValue(
-        Command(['xacro ', xacro_path, ' use_gazebo:=true']), value_type=str
+        Command(['xacro ', xacro_path, ' use_gazebo:=true',
+                 ' controllers_file:=', controllers_file]), value_type=str
     )
 
     robot_state_publisher = Node(
@@ -89,18 +94,10 @@ def generate_launch_description():
         output='screen',
     )
 
-    joint_state_broadcaster = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['joint_state_broadcaster'],
-        output='screen',
-    )
-
-    diff_drive_controller = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['diff_drive_controller'],
-        output='screen',
+    # controllers + twist_mux (same launch file as the real robot), with Gazebo time
+    control = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(control_launch),
+        launch_arguments={'use_sim_time': 'true'}.items(),
     )
 
     return LaunchDescription([
@@ -119,6 +116,6 @@ def generate_launch_description():
         # controllers can only start after the robot (and its controller_manager) exists
         RegisterEventHandler(OnProcessExit(
             target_action=spawn_robot,
-            on_exit=[joint_state_broadcaster, diff_drive_controller],
+            on_exit=[control],
         )),
     ])
