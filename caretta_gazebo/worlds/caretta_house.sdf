@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <!-- Caretta house world (Ignition Gazebo Fortress): small house with a corridor, three rooms and
-     furniture, for driving around and SLAM (mapping). Same plugins as caretta_test.sdf. -->
+     furniture, for driving around and SLAM (mapping). Same plugins as caretta_empty.sdf. -->
 <sdf version="1.8">
   <world name="caretta_house">
 
