@@ -134,13 +134,15 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard \
 `true` stops the robot: every velocity command (teleop and Nav2) is blocked until you release it:
 
 ```bash
-ros2 topic pub --once /e_stop std_msgs/msg/Bool "data: true"
+ros2 topic pub --rate 10 /e_stop std_msgs/msg/Bool "data: true"
 ```
+
+Wait until the robot stops, then press **Ctrl+C**. It stays stopped. Do not use `--once`: the single message can get lost.
 
 `false` releases it, the robot accepts commands again:
 
 ```bash
-ros2 topic pub --once /e_stop std_msgs/msg/Bool "data: false"
+ros2 topic pub --times 10 --rate 10 /e_stop std_msgs/msg/Bool "data: false"
 ```
 
 ## 3. Topics
